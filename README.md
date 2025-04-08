@@ -69,37 +69,44 @@ GITHUB_TOKEN="Token"
 GIT_REMOTE="https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${GITHUB_USER}/ObsidianVault.git" 
 BRANCH="main"
 
-# Change to the repository directory
-cd "$REPO_PATH" || { echo "Directory not found!"; exit 1; }
+# Check for internet connection
+if ping -q -c 1 -W 1 google.com >/dev/null; then
+    echo "Internetverbindung erkannt. Fortfahren..."
 
-# If the repository is not linked, set the remote URL
-if ! git remote get-url origin &>/dev/null; then
-    git remote set-url origin "$GIT_REMOTE"
-fi
+    # Change to the repository directory
+    cd "$REPO_PATH" || { echo "Directory not found!"; exit 1; }
 
-# Stash changes before pulling
-git stash push -m "Backup before pull"
+    # If the repository is not linked, set the remote URL
+    if ! git remote get-url origin &>/dev/null; then
+        git remote set-url origin "$GIT_REMOTE"
+    fi
 
-# Fetch the latest changes
-git pull --rebase --autostash origin "$BRANCH"
+    # Stash changes before pulling
+    git stash push -m "Backup before pull"
 
-# Restore stashed changes
-git stash pop || echo "No stashed changes found."
+    # Fetch the latest changes
+    git pull --rebase --autostash origin "$BRANCH"
 
-# Check if there are unstaged or staged changes
-if ! git diff --quiet || ! git diff --cached --quiet; then
-    echo "Changes detected – committing..."
-    
-    # Stage all changes
-    git add .
-    
-    # Commit with the current date & time
-    git commit -m "Auto-commit $(date '+%Y-%m-%d %H:%M:%S')"
-    
-    # Push changes
-    git push origin "$BRANCH"
+    # Restore stashed changes
+    git stash pop || echo "No stashed changes found."
+
+    # Check if there are unstaged or staged changes
+    if ! git diff --quiet || ! git diff --cached --quiet; then
+        echo "Changes detected – committing..."
+
+        # Stage all changes
+        git add .
+
+        # Commit with the current date & time
+        git commit -m "Auto-commit $(date '+%Y-%m-%d %H:%M:%S')"
+
+        # Push changes
+        git push origin "$BRANCH"
+    else
+        echo "No changes - push skipped."
+    fi
 else
-    echo "No changes - push skipped."
+    echo "Keine Internetverbindung! Vorgang abgebrochen."
 fi
 
 ```
